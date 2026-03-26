@@ -422,6 +422,7 @@ def test_ward_search_prioritizes_diacritics_match(query: str, expected_ward_name
         ('Tân Hải', ['Xã Tân Hải', 'Phường Tân Hải']),  # Multi-word with diacritics
         ('phuong tan hai', ['Phường Tân Hải']),  # With division type prefix
         ('xa tan hai', ['Xã Tân Hải']),  # With division type prefix
+        ('tan h', ['Xã Tân Hải', 'Phường Tân Hải']),  # Prefix matching for second word
     ],
 )
 def test_ward_search_multi_word(query: str, expected_in_results: list[str]) -> None:
@@ -484,6 +485,29 @@ def test_ward_search_returns_tuple() -> None:
 
     # Should return a tuple (not None, not list)
     assert isinstance(results, tuple)
+
+
+def test_ward_search_with_province_filter() -> None:
+    """Test that Ward.search can filter by province."""
+    # Test filtering by province
+    results_all = Ward.search('phu my')
+    results_hcmc = Ward.search('phu my', province=ProvinceCode(79))  # Hồ Chí Minh City
+
+    # Filtered results should be a subset of all results
+    assert len(results_hcmc) <= len(results_all)
+
+    # All filtered results should be from the specified province
+    if results_hcmc:
+        assert all(ward.province_code == ProvinceCode(79) for ward in results_hcmc)
+
+    # Test with a province that has matching wards
+    results_gialai = Ward.search('phu my', province=ProvinceCode(52))  # Gia Lai
+    assert len(results_gialai) > 0
+    assert all(ward.province_code == ProvinceCode(52) for ward in results_gialai)
+
+    # Test with empty results
+    results_empty = Ward.search('nonexistent', province=ProvinceCode(79))
+    assert results_empty == ()
 
 
 def test_ward_search_no_results() -> None:

@@ -281,7 +281,7 @@ class Ward:
         return values
 
     @classmethod
-    def search(cls, name: str = '') -> tuple[Ward, ...]:
+    def search(cls, name: str = '', province: ProvinceCode | None = None) -> tuple[Ward, ...]:
         """Search for wards by name.
 
         This method searches for wards matching the given name with priority:
@@ -290,9 +290,12 @@ class Ward:
         3. Exact match (normalized, no diacritics)
         4. Partial match (earlier position is better)
 
-        If the input contains multiple words, all words must match.
+        If the query contains multiple words:
+        - First word in the query must match a word in ward name as a whole.
+        - The other words in the query just need to match by "startswith" (i.e. "H"/"h" can match "Hai")
 
         :param name: Part of a ward name to search for
+        :param province: Return wards for this province only.
         :returns: Tuple of matching :class:`vietnam_provinces.Ward` objects
         """
         if not name:
@@ -306,14 +309,34 @@ class Ward:
         query = normalize_search_name(name)
         results: list[tuple[Ward, int]] = []  # (ward, match_score)
 
-        for ward in cls.iter_all():
-            normalized_name = normalize_search_name(ward.name)
-            # Split normalized name into words for whole-word matching
-            name_words = set(normalized_name.split())
+        # Determine which wards to iterate over based on province filter
+        if province is not None:
+            wards_to_search = cls.iter_by_province(province)
+        else:
+            wards_to_search = cls.iter_all()
 
-            # All query words must be present as whole words in the name
-            if not all(word in name_words for word in normalized_words):
+        for ward in wards_to_search:
+            normalized_name = normalize_search_name(ward.name)
+            # Split normalized name into words for matching
+            name_words = normalized_name.split()
+
+            if not normalized_words:
                 continue
+
+            # First word must match exactly as a whole word in the ward name
+            first_word = normalized_words[0]
+            if first_word not in name_words:
+                continue
+
+            # Other words must match by "startswith"
+            for word in normalized_words[1:]:
+                if not any(name_word.startswith(word) for name_word in name_words):
+                    continue
+                break
+            else:
+                # If we have remaining words that didn't match
+                if len(normalized_words) > 1:
+                    continue
 
             # Calculate match score (lower is better)
             match_score = calculate_simple_match_score(name, query, ward.name)

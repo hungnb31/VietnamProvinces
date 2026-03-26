@@ -90,7 +90,7 @@ class ConversionMetadata:
 class ConversionTable(BaseModel):
     """Complete conversion table for 2025 ward changes."""
 
-    metadata: dict = Field(default_factory=dict)
+    metadata: dict[str, object] = Field(default_factory=dict)
     old_to_new: dict[str, OldToNewEntry]
     new_to_old: dict[str, NewToOldEntry]
 
@@ -225,7 +225,7 @@ def build_conversion_table(records: list[ConversionCSVRecord]) -> ConversionTabl
 
         new_to_old[str(new_code)] = NewToOldEntry(new_ward=new_ref, old_wards=old_refs)
 
-    metadata = {
+    metadata: dict[str, object] = {
         'description': 'Ward conversion table for administrative changes effective 01/07/2025',
         'effective_date': '2025-07-01',
         'source': 'BangChuyendoiĐVHCmoi_cu_khong_merge.csv',
@@ -320,8 +320,8 @@ def generate_ward_conversion_table(csv_path: Path, output_path: Path) -> Convers
 
     new_to_old_keys: list[ast.expr | None] = []
     new_to_old_values: list[ast.expr] = []
-    for new_code, entry in table.new_to_old.items():
-        key, value = gen_new_to_old_entry(new_code, entry)
+    for new_code, new_to_old_entry in table.new_to_old.items():
+        key, value = gen_new_to_old_entry(new_code, new_to_old_entry)
         new_to_old_keys.append(key)
         new_to_old_values.append(value)
 
@@ -336,9 +336,9 @@ def generate_ward_conversion_table(csv_path: Path, output_path: Path) -> Convers
         partly_merged_count=sum(1 for e in table.old_to_new.values() if e.old_ward.is_partly_merged),
     )
     return ConversionMetadata(
-        description=table.metadata['description'],
-        effective_date=table.metadata['effective_date'],
-        source=table.metadata['source'],
+        description=str(table.metadata['description']),
+        effective_date=str(table.metadata['effective_date']),
+        source=str(table.metadata['source']),
         stats=stats,
     )
 
@@ -391,7 +391,7 @@ class ProvinceConversionMetadata:
 class ProvinceConversionTable(BaseModel):
     """Complete conversion table for 2025 province changes."""
 
-    metadata: dict = Field(default_factory=dict)
+    metadata: dict[str, str] = Field(default_factory=dict)
     old_to_new: dict[str, ProvinceOldToNewEntry]
     new_to_old: dict[str, ProvinceNewToOldEntry]
 
@@ -424,7 +424,7 @@ def build_province_conversion_table(records: list[ConversionCSVRecord]) -> Provi
         old_refs = [OldProvinceRef(code=c) for c in old_codes]
         new_to_old[str(new_code)] = ProvinceNewToOldEntry(new_province=new_ref, old_provinces=old_refs)
 
-    metadata = {
+    metadata: dict[str, str] = {
         'description': 'Province conversion table for administrative changes effective 01/07/2025',
         'effective_date': '2025-07-01',
         'source': 'BangChuyendoiĐVHCmoi_cu_khong_merge.csv',
@@ -509,8 +509,8 @@ def generate_province_conversion_table(csv_path: Path, output_path: Path) -> Pro
 
     new_to_old_keys: list[ast.expr | None] = []
     new_to_old_values: list[ast.expr] = []
-    for new_code, entry in table.new_to_old.items():
-        key, value = gen_province_new_to_old_entry(new_code, entry)
+    for new_code, new_to_old_entry in table.new_to_old.items():
+        key, value = gen_province_new_to_old_entry(new_code, new_to_old_entry)
         new_to_old_keys.append(key)
         new_to_old_values.append(value)
 
@@ -524,8 +524,8 @@ def generate_province_conversion_table(csv_path: Path, output_path: Path) -> Pro
         new_provinces_count=len(table.new_to_old),
     )
     return ProvinceConversionMetadata(
-        description=table.metadata['description'],
-        effective_date=table.metadata['effective_date'],
-        source=table.metadata['source'],
+        description=str(table.metadata['description']),
+        effective_date=str(table.metadata['effective_date']),
+        source=str(table.metadata['source']),
         stats=stats,
     )

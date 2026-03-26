@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026.3.0] - 2026-02-21
+
+### Added
+
+- Support for filtering ward searches by province.
+
+### Fixed
+
+- Fix a case where searching for "tan h" get nothing.
+
 ## [2026.2.3] - 2026-02-21
 
 ### Fixed
@@ -44,6 +54,7 @@ and use `ProvinceCode`, `WardCode` as enum to define valid data.
 - Update data with the form of new towns.
 
 
+[2026.3.0]: https://github.com/sunshine-tech/VietnamProvinces/releases/tag/v2026.3.0
 [2026.2.3]: https://github.com/sunshine-tech/VietnamProvinces/releases/tag/v2026.2.3
 [2026.2.2]: https://github.com/sunshine-tech/VietnamProvinces/releases/tag/v2026.2.2
 [2026.2.0]: https://github.com/sunshine-tech/VietnamProvinces/releases/tag/v2026.2.0

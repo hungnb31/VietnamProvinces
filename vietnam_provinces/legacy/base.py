@@ -100,7 +100,9 @@ class Province:
         3. Exact match (normalized, no diacritics)
         4. Partial match (earlier position is better)
 
-        If the input contains multiple words, all words must match as whole words.
+        If the query contains multiple words:
+        - First word in the query must match a word in province name as a whole.
+        - The other words in the query just need to match by "startswith" (i.e. "H"/"h" can match "Hà")
 
         :param name: Part of a province name to search for
         :returns: Tuple of matching :class:`vietnam_provinces.legacy.Province` objects
@@ -112,28 +114,38 @@ class Province:
         from ..helpers import calculate_simple_match_score, normalize_search_name
 
         # Split input into words, normalize, and filter out division type prefixes
-        # Only filter if they appear at the beginning (e.g., "Tỉnh Hà Giang" -> "Hà Giang")
         division_types = {'tinh', 'thanh', 'pho'}
         words = [normalize_search_name(word) for word in name.split()]
-        # Only skip division type words at the beginning
-        normalized_words = []
-        skipped_prefix = True
-        for word in words:
-            if skipped_prefix and word in division_types:
-                continue
-            skipped_prefix = False
-            normalized_words.append(word)
+        normalized_words = [word for word in words if word not in division_types]
         query = normalize_search_name(name)
         results: list[tuple[Province, int]] = []  # (province, match_score)
 
         for province in cls.iter_all():
             normalized_name = normalize_search_name(province.name)
-            # Split normalized name into words for whole-word matching
-            name_words = set(normalized_name.split())
+            # Split normalized name into words for matching
+            name_words = normalized_name.split()
 
-            # All query words must be present as whole words in the name
-            if not all(word in name_words for word in normalized_words):
+            if not normalized_words:
                 continue
+
+            # First word must match exactly as a whole word in the province name
+            first_word = normalized_words[0]
+            if first_word not in name_words:
+                continue
+
+            # Other words must match by "startswith"
+            if len(normalized_words) > 1:
+                for word in normalized_words[1:]:
+                    if not any(name_word.startswith(word) for name_word in name_words):
+                        break
+                else:
+                    # All remaining words matched
+                    pass
+                # If we broke out of the loop, a word didn't match
+                if not all(
+                    any(name_word.startswith(word) for name_word in name_words) for word in normalized_words[1:]
+                ):
+                    continue
 
             # Calculate match score (lower is better)
             match_score = calculate_simple_match_score(name, query, province.name)
@@ -211,7 +223,7 @@ class District:
         return values
 
     @classmethod
-    def search(cls, name: str = '') -> tuple[District, ...]:
+    def search(cls, name: str = '', province: ProvinceCode | None = None) -> tuple[District, ...]:
         """Search for districts by name.
 
         This method searches for districts matching the given name with priority:
@@ -220,9 +232,12 @@ class District:
         3. Exact match (normalized, no diacritics)
         4. Partial match (earlier position is better)
 
-        If the input contains multiple words, all words must match as whole words.
+        If the query contains multiple words:
+        - First word in the query must match a word in district name as a whole.
+        - The other words in the query just need to match by "startswith" (i.e. "H"/"h" can match "Hải")
 
         :param name: Part of a district name to search for
+        :param province: Return districts for this province only.
         :returns: Tuple of matching :class:`vietnam_provinces.legacy.District` objects
         """
         if not name:
@@ -232,28 +247,44 @@ class District:
         from ..helpers import calculate_simple_match_score, normalize_search_name
 
         # Split input into words, normalize, and filter out division type prefixes
-        # Only filter if they appear at the beginning (e.g., "Xã Tân Hòa" -> "Tân Hòa")
-        division_types = {'tinh', 'thanh', 'pho', 'quan', 'huyen', 'thi', 'xa', 'phuong', 'thi', 'tran'}
+        division_types = {'tinh', 'thanh', 'pho', 'quan', 'huyen', 'thi', 'xa', 'phuong', 'tran'}
         words = [normalize_search_name(word) for word in name.split()]
-        # Only skip division type words at the beginning
-        normalized_words = []
-        skipped_prefix = True
-        for word in words:
-            if skipped_prefix and word in division_types:
-                continue
-            skipped_prefix = False
-            normalized_words.append(word)
+        normalized_words = [word for word in words if word not in division_types]
         query = normalize_search_name(name)
         results: list[tuple[District, int]] = []  # (district, match_score)
 
-        for district in cls.iter_all():
-            normalized_name = normalize_search_name(district.name)
-            # Split normalized name into words for whole-word matching
-            name_words = set(normalized_name.split())
+        # Determine which districts to iterate over based on province filter
+        if province is not None:
+            districts_to_search = cls.iter_by_province(province)
+        else:
+            districts_to_search = cls.iter_all()
 
-            # All query words must be present as whole words in the name
-            if not all(word in name_words for word in normalized_words):
+        for district in districts_to_search:
+            normalized_name = normalize_search_name(district.name)
+            # Split normalized name into words for matching
+            name_words = normalized_name.split()
+
+            if not normalized_words:
                 continue
+
+            # First word must match exactly as a whole word in the district name
+            first_word = normalized_words[0]
+            if first_word not in name_words:
+                continue
+
+            # Other words must match by "startswith"
+            if len(normalized_words) > 1:
+                for word in normalized_words[1:]:
+                    if not any(name_word.startswith(word) for name_word in name_words):
+                        break
+                else:
+                    # All remaining words matched
+                    pass
+                # If we broke out of the loop, a word didn't match
+                if not all(
+                    any(name_word.startswith(word) for name_word in name_words) for word in normalized_words[1:]
+                ):
+                    continue
 
             # Calculate match score (lower is better)
             match_score = calculate_simple_match_score(name, query, district.name)
@@ -354,7 +385,9 @@ class Ward:
         return district.province_code
 
     @classmethod
-    def search(cls, name: str = '') -> tuple[Ward, ...]:
+    def search(
+        cls, name: str = '', *, district: DistrictCode | None = None, province: ProvinceCode | None = None
+    ) -> tuple[Ward, ...]:
         """Search for wards by name.
 
         This method searches for wards matching the given name with priority:
@@ -363,9 +396,13 @@ class Ward:
         3. Exact match (normalized, no diacritics)
         4. Partial match (earlier position is better)
 
-        If the input contains multiple words, all words must match as whole words.
+        If the query contains multiple words:
+        - First word in the query must match a word in ward name as a whole.
+        - The other words in the query just need to match by "startswith" (i.e. "H"/"h" can match "Hải")
 
         :param name: Part of a ward name to search for
+        :param district: Return wards for this district only.
+        :param province: Return wards for this province only (ignore if `district` is provided).
         :returns: Tuple of matching :class:`vietnam_provinces.legacy.Ward` objects
         """
         if not name:
@@ -375,28 +412,46 @@ class Ward:
         from ..helpers import calculate_simple_match_score, normalize_search_name
 
         # Split input into words, normalize, and filter out division type prefixes
-        # Only filter if they appear at the beginning (e.g., "Xã Tân Hòa" -> "Tân Hòa")
-        division_types = {'tinh', 'thanh', 'pho', 'quan', 'huyen', 'thi', 'xa', 'phuong', 'thi', 'tran'}
+        division_types = {'tinh', 'thanh', 'pho', 'quan', 'huyen', 'thi', 'xa', 'phuong', 'tran'}
         words = [normalize_search_name(word) for word in name.split()]
-        # Only skip division type words at the beginning
-        normalized_words = []
-        skipped_prefix = True
-        for word in words:
-            if skipped_prefix and word in division_types:
-                continue
-            skipped_prefix = False
-            normalized_words.append(word)
+        normalized_words = [word for word in words if word not in division_types]
         query = normalize_search_name(name)
         results: list[tuple[Ward, int]] = []  # (ward, match_score)
 
-        for ward in cls.iter_all():
-            normalized_name = normalize_search_name(ward.name)
-            # Split normalized name into words for whole-word matching
-            name_words = set(normalized_name.split())
+        # Determine which wards to iterate over based on district/province filter
+        if district is not None:
+            wards_to_search = cls.iter_by_district(district)
+        elif province is not None:
+            wards_to_search = cls.iter_by_province(province)
+        else:
+            wards_to_search = cls.iter_all()
 
-            # All query words must be present as whole words in the name
-            if not all(word in name_words for word in normalized_words):
+        for ward in wards_to_search:
+            normalized_name = normalize_search_name(ward.name)
+            # Split normalized name into words for matching
+            name_words = normalized_name.split()
+
+            if not normalized_words:
                 continue
+
+            # First word must match exactly as a whole word in the ward name
+            first_word = normalized_words[0]
+            if first_word not in name_words:
+                continue
+
+            # Other words must match by "startswith"
+            if len(normalized_words) > 1:
+                for word in normalized_words[1:]:
+                    if not any(name_word.startswith(word) for name_word in name_words):
+                        break
+                else:
+                    # All remaining words matched
+                    pass
+                # If we broke out of the loop, a word didn't match
+                if not all(
+                    any(name_word.startswith(word) for name_word in name_words) for word in normalized_words[1:]
+                ):
+                    continue
 
             # Calculate match score (lower is better)
             match_score = calculate_simple_match_score(name, query, ward.name)
