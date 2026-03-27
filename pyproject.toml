@@ -122,3 +122,8 @@ quote-style = "single"
 
 [tool.ty.src]
 exclude = ["dev/_*.py"]
+
+[tool.zuban]
+exclude = [
+  "dev/_*.py"
+]
