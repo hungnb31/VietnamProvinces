@@ -20,7 +20,6 @@ release = __version__
 
 extensions = [
     'sphinx.ext.autodoc',
-    'enum_tools.autoenum',
     'sphinx.ext.intersphinx',
     'myst_parser',
 ]

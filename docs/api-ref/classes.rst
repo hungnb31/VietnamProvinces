@@ -3,7 +3,7 @@ Classes
 
 .. module:: vietnam_provinces
 
-.. autoenum:: VietNamDivisionType
+.. autoclass:: VietNamDivisionType
    :members:
 
 .. autoclass:: Province

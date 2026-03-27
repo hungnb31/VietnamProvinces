@@ -34,24 +34,24 @@ dev = [
   "devtools >= 0.12.2",
   "httpx >= 0.28.1",
   "logbook >= 1.9.2",
+  "logbook-stubs>=0.3.0",
   "markupever>=0.3.2",
   "ptpython>=3.0.32",
   "pydantic >= 2.12.5",
   "pyjson5>=2.0.0",
   "pytest >= 9.0.2",
   "python-rapidjson >= 1.23",
-  "ty>=0.0.18",
+  "ty>=0.0.26",
   "unidecode>=1.4.0",
 ]
 docs = [
-  "enum-tools>=0.13.0",
   "furo>=2025.12.19",
   "myst-parser>=5.0.0",
   "sphinx-autobuild>=2025.8.25",
   "sphinx-book-theme>=1.1.4",
   "sphinx-toolbox>=4.1.2",
 ]
-lint = ["pre-commit >= 4.5.1", "ruff >= 0.15.2"]
+lint = ["pre-commit >= 4.5.1", "ruff >= 0.15.8"]
 
 [build-system]
 requires = ["flit_core >= 3.4"]
@@ -69,7 +69,7 @@ exclude = ['dev/_\w+\.py']
 disable_error_code = "prop-decorator"
 
 [[tool.mypy.overrides]]
-module = ["fast_enum", "logbook.*"]
+module = ["fast_enum"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
