@@ -82,6 +82,10 @@ Bạn có thể import vào code Python để dùng ngay.
     >>> Ward.search('phu my')
     (Ward(name='Phường Phú Mỹ', ...), Ward(name='Xã Phú Mỹ', ...), ...)
 
+    >>> # Tìm kiếm phường xã theo tên trong một tỉnh thành cụ thể
+    >>> Ward.search('phu my', province=ProvinceCode(79))  # Thành phố Hồ Chí Minh
+    (Ward(name='Phường Phú Mỹ', ...), ...)
+
     >>> # Tìm kiếm phường xã hiện tại bằng dữ liệu cũ (trước 2025)
     >>> Ward.search_from_legacy(name='phu my')
     (WardWithLegacy(source_code=21730, ward=Ward(name='Xã Phù Mỹ', ...)), ...)

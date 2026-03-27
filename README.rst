@@ -81,6 +81,10 @@ There are two kinds of objects, first is the object presenting a single province
     >>> Ward.search('phu my')
     (Ward(name='Phường Phú Mỹ', ...), Ward(name='Xã Phú Mỹ', ...), ...)
 
+    >>> # Search wards by name in a specific province
+    >>> Ward.search('phu my', province=ProvinceCode(79))  # Hồ Chí Minh City
+    (Ward(name='Phường Phú Mỹ', ...), ...)
+
     >>> # Search current wards by legacy data (pre-2025)
     >>> Ward.search_from_legacy(name='phu my')
     (WardWithLegacy(source_code=21730, ward=Ward(name='Xã Phù Mỹ', ...)), ...)
