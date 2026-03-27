@@ -4,11 +4,12 @@
 
 ### Added
 
-- Support for filtering ward searches by province.
+- Support for narrowing down ward searches by province (contemporary class), by district / province (legacy class).
+  This narrowing is also applied for legacy `District` class.
 
 ### Fixed
 
-- Fix a case where searching for "tan h" get nothing.
+- Fix a case where searching for "tan h" got nothing.
 
 ## [2026.2.3] - 2026-02-21
 
